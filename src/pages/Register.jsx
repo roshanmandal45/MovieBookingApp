@@ -1,118 +1,99 @@
-import { useState } from 'react';
-import { Mail, Lock, User } from 'lucide-react';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { auth, provider,signInWithPopup  } from "../config/Firebase";
 
-export default function Register() {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-  });
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
+export default function Signup() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const navigate = useNavigate();
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Handle form submission logic here
-    console.log('Form submitted:', formData);
+    console.log("Email signup:", { email, password });
+    // You can implement Firebase email/password signup here if needed
+  };
+
+  const handleGoogleSignup = async () => {
+    try {
+      const result = await signInWithPopup(auth, provider);
+      console.log("Google signup success:", result.user);
+      navigate("/movies"); // redirect after signup
+    } catch (error) {
+      console.error("Google signup error:", error);
+      alert("Google signup failed. Try again.");
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 to-black flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-2xl p-8 w-full max-w-md">
-        <h1 className="text-3xl font-bold text-gray-800 mb-6 text-center">Sign Up</h1>
+    <div className="min-h-screen bg-gradient-to-br from-blue-900 to-purple-900 flex items-center justify-center p-4">
+      <div className="w-full max-w-md bg-white rounded-lg shadow-xl p-8">
+        <h1 className="text-3xl font-bold text-center mb-2">Sign Up</h1>
+        <p className="text-center text-gray-600 mb-8">Create your Movie Booking account</p>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Name Field */}
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Email */}
           <div>
-            <label className="block text-gray-700 text-sm font-semibold mb-2">Full Name</label>
-            <div className="flex items-center border border-gray-300 rounded-lg px-4 py-2 focus-within:border-blue-500">
-              <User size={18} className="text-gray-400 mr-2" />
+            <label className="block text-sm font-medium mb-2">Email</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="your@email.com"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+          </div>
+
+          {/* Password */}
+          <div>
+            <label className="block text-sm font-medium mb-2">Password</label>
+            <div className="relative">
               <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                placeholder="Enter your name"
-                className="w-full outline-none text-gray-800"
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+              >
+                {showPassword ? "Hide" : "Show"}
+              </button>
             </div>
           </div>
 
-          {/* Email Field */}
-          <div>
-            <label className="block text-gray-700 text-sm font-semibold mb-2">Email</label>
-            <div className="flex items-center border border-gray-300 rounded-lg px-4 py-2 focus-within:border-blue-500">
-              <Mail size={18} className="text-gray-400 mr-2" />
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                placeholder="Enter your email"
-                className="w-full outline-none text-gray-800"
-                required
-              />
-            </div>
-          </div>
-
-          {/* Password Field */}
-          <div>
-            <label className="block text-gray-700 text-sm font-semibold mb-2">Password</label>
-            <div className="flex items-center border border-gray-300 rounded-lg px-4 py-2 focus-within:border-blue-500">
-              <Lock size={18} className="text-gray-400 mr-2" />
-              <input
-                type="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                placeholder="Enter your password"
-                className="w-full outline-none text-gray-800"
-                required
-              />
-            </div>
-          </div>
-
-          {/* Confirm Password Field */}
-          <div>
-            <label className="block text-gray-700 text-sm font-semibold mb-2">Confirm Password</label>
-            <div className="flex items-center border border-gray-300 rounded-lg px-4 py-2 focus-within:border-blue-500">
-              <Lock size={18} className="text-gray-400 mr-2" />
-              <input
-                type="password"
-                name="confirmPassword"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                placeholder="Confirm your password"
-                className="w-full outline-none text-gray-800"
-                required
-              />
-            </div>
-          </div>
-
-          {/* Submit Button */}
+          {/* Sign Up Button */}
           <button
             type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition duration-200 mt-6"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition duration-200"
           >
             Sign Up
           </button>
         </form>
 
-        {/* Login Link */}
-        <p className="text-center text-gray-600 text-sm mt-4">
-          Already have an account?{' '}
+        {/* Google Signup */}
+        <div className="mt-6 text-center">
+          <p className="text-gray-600 mb-2">Or continue with</p>
+          <button
+            onClick={handleGoogleSignup}
+            className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 rounded-lg transition duration-200"
+          >
+            Continue with Google
+          </button>
+        </div>
+
+        <div className="mt-6 text-center text-sm text-gray-600">
+          Already have an account?{" "}
           <a href="/login" className="text-blue-600 hover:text-blue-700 font-semibold">
             Login
           </a>
-        </p>
+        </div>
       </div>
     </div>
   );
