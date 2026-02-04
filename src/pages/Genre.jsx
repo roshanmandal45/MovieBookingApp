@@ -1,122 +1,207 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { Tab, Transition } from "@headlessui/react";
 
-const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
-const IMAGE = "https://image.tmdb.org/t/p/w500";
+const TMDB_KEY = import.meta.env.VITE_TMDB_API_KEY;
 
-export default function GenresPage() {
-  const navigate = useNavigate();
-  const [genres, setGenres] = useState([]);
+// Genre list (you can fetch dynamically too)
+const genresList = [
+  { id: 28, name: "Action" },
+  { id: 12, name: "Adventure" },
+  { id: 16, name: "Animation" },
+  { id: 35, name: "Comedy" },
+  { id: 80, name: "Crime" },
+  { id: 18, name: "Drama" },
+];
+
+const showTimes = ["10:00 AM", "1:00 PM", "4:00 PM", "7:00 PM"];
+
+const Genre = () => {
   const [selectedGenre, setSelectedGenre] = useState(null);
-  const [movies, setMovies] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [currentMovies, setCurrentMovies] = useState([]);
+  const [upcomingMovies, setUpcomingMovies] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  // Fetch all genres from TMDB
-  useEffect(() => {
-    const fetchGenres = async () => {
-      try {
-        const res = await axios.get(
-          "https://api.themoviedb.org/3/genre/movie/list",
-          { params: { api_key: API_KEY } }
-        );
-        setGenres(res.data.genres);
-        setSelectedGenre(res.data.genres[0]); // default first genre
-      } catch (err) {
-        console.error("Failed to fetch genres:", err);
-      }
-    };
-    fetchGenres();
-  }, []);
+  // Fetch movies for genre
+  const fetchMovies = async (genreId) => {
+    setLoading(true);
+    try {
+      // Currently showing (popular movies of that genre)
+      const resCurrent = await fetch(
+        `https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_KEY}&with_genres=${genreId}&language=en-US&page=1`
+      );
+      const dataCurrent = await resCurrent.json();
+      setCurrentMovies(dataCurrent.results?.slice(0, 6) || []);
 
-  // Fetch movies when a genre is selected
-  useEffect(() => {
-    if (!selectedGenre) return;
-    const fetchMovies = async () => {
-      setLoading(true);
-      try {
-        const res = await axios.get(
-          "https://api.themoviedb.org/3/discover/movie",
-          {
-            params: {
-              api_key: API_KEY,
-              with_genres: selectedGenre.id,
-              sort_by: "popularity.desc",
-              page: 1,
-            },
-          }
-        );
-        setMovies(res.data.results);
-      } catch (err) {
-        console.error("Failed to fetch movies:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchMovies();
-  }, [selectedGenre]);
+      // Upcoming movies
+      const resUpcoming = await fetch(
+        `https://api.themoviedb.org/3/movie/upcoming?api_key=${TMDB_KEY}&language=en-US&page=1`
+      );
+      const dataUpcoming = await resUpcoming.json();
+      // Filter by genre
+      const upcomingOfGenre = dataUpcoming.results?.filter((m) =>
+        m.genre_ids.includes(genreId)
+      );
+      setUpcomingMovies(upcomingOfGenre?.slice(0, 6) || []);
+    } catch (err) {
+      console.error("Error fetching movies:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  if (!selectedGenre) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-900 text-white">
-        Loading genres...
-      </div>
-    );
-  }
+  const handleGenreClick = (genre) => {
+    setSelectedGenre(genre);
+    fetchMovies(genre.id);
+  };
 
   return (
-    <div className="bg-slate-900 min-h-screen p-6 text-white">
-      <h1 className="text-3xl font-bold text-center mb-6">Genres</h1>
+    <div className="p-6 bg-gray-50 min-h-screen">
+      <h1 className="text-3xl font-bold mb-6 text-center text-purple-700">
+        Explore Genres 🎬
+      </h1>
 
-      {/* Genre buttons */}
-      <div className="flex flex-wrap justify-center gap-4 mb-8">
-        {genres.map((genre) => (
-          <button
+      {/* Genres grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6 mb-8">
+        {genresList.map((genre) => (
+          <div
             key={genre.id}
-            onClick={() => setSelectedGenre(genre)}
-            className={`px-4 py-2 rounded-full font-semibold transition ${
-              selectedGenre.id === genre.id
-                ? "bg-red-600 text-white"
-                : "bg-gray-700 hover:bg-gray-600 text-gray-200"
-            }`}
+            onClick={() => handleGenreClick(genre)}
+            className="cursor-pointer bg-purple-100 hover:bg-purple-200 text-purple-700 font-semibold p-4 rounded-lg shadow-md text-center transition transform hover:scale-105"
           >
             {genre.name}
-          </button>
+          </div>
         ))}
       </div>
 
-      {/* Movies grid */}
-      {loading ? (
-        <div className="text-center text-white">Loading {selectedGenre.name} movies...</div>
-      ) : (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          {movies.map((movie) => (
-            <div
-              key={movie.id}
-              className="relative cursor-pointer group rounded-lg overflow-hidden shadow-lg"
-            >
-              <img
-                src={IMAGE + movie.poster_path}
-                alt={movie.title}
-                className="h-80 w-full object-cover transition-transform duration-500 group-hover:scale-110"
-              />
-              {/* Hover overlay */}
-              <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                <button
-                  onClick={() => navigate(`/movies/${movie.id}`)}
-                  className="bg-red-600 hover:bg-red-700 px-6 py-2 rounded-lg font-semibold text-white transition transform hover:scale-105"
+      {/* Sub-tabs for selected genre */}
+      {selectedGenre && (
+        <div className="max-w-6xl mx-auto">
+          <Tab.Group>
+            <Tab.List className="flex space-x-4 mb-4 justify-center">
+              {["Currently Showing", "Upcoming"].map((tab) => (
+                <Tab
+                  key={tab}
+                  className={({ selected }) =>
+                    `px-4 py-2 rounded-lg font-semibold transition ${
+                      selected
+                        ? "bg-purple-600 text-white shadow-lg"
+                        : "bg-purple-100 text-purple-700 hover:bg-purple-200"
+                    }`
+                  }
                 >
-                  View Details
-                </button>
-              </div>
-              {/* Movie title */}
-              <div className="absolute bottom-0 left-0 right-0 bg-black/50 p-2 text-center text-sm font-semibold line-clamp-2">
-                {movie.title}
-              </div>
-            </div>
-          ))}
+                  {tab}
+                </Tab>
+              ))}
+            </Tab.List>
+
+            <Tab.Panels>
+              {/* Currently Showing */}
+              <Tab.Panel>
+                {loading ? (
+                  <p className="text-center text-purple-700 font-bold mt-10">
+                    Loading...
+                  </p>
+                ) : (
+                  <Transition
+                    show={!loading}
+                    enter="transition-opacity duration-500"
+                    enterFrom="opacity-0"
+                    enterTo="opacity-100"
+                    leave="transition-opacity duration-300"
+                    leaveFrom="opacity-100"
+                    leaveTo="opacity-0"
+                  >
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {currentMovies.map((movie) => (
+                        <div
+                          key={movie.id}
+                          className="bg-white rounded-lg shadow-lg overflow-hidden hover:scale-105 transition-transform duration-300"
+                        >
+                          <img
+                            src={
+                              movie.poster_path
+                                ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+                                : "https://via.placeholder.com/500x750?text=No+Image"
+                            }
+                            alt={movie.title}
+                            className="w-full h-72 object-cover"
+                          />
+                          <div className="p-4">
+                            <h2 className="font-bold text-lg">{movie.title}</h2>
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              {showTimes.map((time, idx) => (
+                                <span
+                                  key={idx}
+                                  className="bg-purple-100 text-purple-700 px-2 py-1 rounded"
+                                >
+                                  {time}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </Transition>
+                )}
+              </Tab.Panel>
+
+              {/* Upcoming */}
+              <Tab.Panel>
+                {loading ? (
+                  <p className="text-center text-purple-700 font-bold mt-10">
+                    Loading...
+                  </p>
+                ) : (
+                  <Transition
+                    show={!loading}
+                    enter="transition-opacity duration-500"
+                    enterFrom="opacity-0"
+                    enterTo="opacity-100"
+                    leave="transition-opacity duration-300"
+                    leaveFrom="opacity-100"
+                    leaveTo="opacity-0"
+                  >
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {upcomingMovies.map((movie) => (
+                        <div
+                          key={movie.id}
+                          className="bg-white rounded-lg shadow-lg overflow-hidden hover:scale-105 transition-transform duration-300"
+                        >
+                          <img
+                            src={
+                              movie.poster_path
+                                ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+                                : "https://via.placeholder.com/500x750?text=No+Image"
+                            }
+                            alt={movie.title}
+                            className="w-full h-72 object-cover"
+                          />
+                          <div className="p-4">
+                            <h2 className="font-bold text-lg">{movie.title}</h2>
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              {showTimes.map((time, idx) => (
+                                <span
+                                  key={idx}
+                                  className="bg-purple-100 text-purple-700 px-2 py-1 rounded"
+                                >
+                                  {time}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </Transition>
+                )}
+              </Tab.Panel>
+            </Tab.Panels>
+          </Tab.Group>
         </div>
       )}
     </div>
   );
-}
+};
+
+export default Genre;

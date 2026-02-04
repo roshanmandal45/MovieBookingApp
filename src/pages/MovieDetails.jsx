@@ -1,89 +1,85 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
-import axios from "axios";
-import { Star, Calendar, Clock } from "lucide-react";
 
-const API_KEY = "80d491707d8cf7b38aa19c7ccab0952f";
-const IMAGE = "https://image.tmdb.org/t/p/original";
+const showTimes = ["10:00 AM", "1:00 PM", "4:00 PM", "7:00 PM"];
+const TMDB_KEY = import.meta.env.VITE_TMDB_API_KEY;
 
-export default function MovieDetails() {
+const MovieDetails = () => {
   const { id } = useParams();
-  const navigate = useNavigate();
   const [movie, setMovie] = useState(null);
+  const [trailerKey, setTrailerKey] = useState(null);
 
   useEffect(() => {
-    axios
-      .get(`https://api.themoviedb.org/3/movie/${id}`, {
-        params: { api_key: API_KEY },
-      })
-      .then((res) => setMovie(res.data));
+    const fetchMovieDetails = async () => {
+      try {
+        // Fetch movie details
+        const res = await fetch(
+          `https://api.themoviedb.org/3/movie/${id}?api_key=${TMDB_KEY}&language=en-US`
+        );
+        const data = await res.json();
+        setMovie(data);
+
+        // Fetch videos for the movie
+        const videoRes = await fetch(
+          `https://api.themoviedb.org/3/movie/${id}/videos?api_key=${TMDB_KEY}&language=en-US`
+        );
+        const videoData = await videoRes.json();
+        // Find the first YouTube trailer
+        const youtubeTrailer = videoData.results.find(
+          (vid) => vid.site === "YouTube" && vid.type === "Trailer"
+        );
+        setTrailerKey(youtubeTrailer?.key || null);
+      } catch (err) {
+        console.error("Error fetching movie details:", err);
+      }
+    };
+
+    fetchMovieDetails();
   }, [id]);
 
-  if (!movie) {
-    return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center text-white">
-        Loading...
-      </div>
-    );
-  }
+  if (!movie) return <p className="text-center mt-10 text-purple-700 font-bold">Loading...</p>;
 
   return (
-    <div
-      className="min-h-screen bg-cover bg-center"
-      style={{
-        backgroundImage: `url(${IMAGE}${movie.backdrop_path})`,
-      }}
-    >
-      {/* Dark overlay */}
-      <div className="min-h-screen bg-black/80 flex items-center justify-center px-4">
-        <div className="max-w-3xl text-center text-white">
-          {/* Back button */}
-          <button
-            onClick={() => navigate(-1)}
-            className="mb-6 text-gray-300 hover:text-white transition"
-          >
-            ← Back
-          </button>
+    <div className="p-6 bg-gray-50 min-h-screen">
+      <h1 className="text-3xl font-bold text-center mb-6 text-purple-700">{movie.title}</h1>
 
-          {/* Title */}
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            {movie.title}
-          </h1>
-
-          {/* Meta info */}
-          <div className="flex justify-center gap-6 text-gray-300 text-sm mb-6">
-            <div className="flex items-center gap-1">
-              <Star className="text-yellow-400 fill-yellow-400" size={18} />
-              {movie.vote_average.toFixed(1)}
-            </div>
-
-            {movie.release_date && (
-              <div className="flex items-center gap-1">
-                <Calendar size={16} />
-                {movie.release_date}
-              </div>
-            )}
-
-            <div className="flex items-center gap-1">
-              <Clock size={16} />
-              {movie.original_language.toUpperCase()}
-            </div>
-          </div>
-
-          {/* Overview */}
-          <p className="text-gray-200 text-lg leading-relaxed px-4 md:px-12 mb-10">
-            {movie.overview || "No description available for this movie."}
-          </p>
-
-          {/* Book Now Button */}
-          <button
-            onClick={() => alert("Booking coming soon 🎟️")}
-            className="px-10 py-3 bg-red-600 hover:bg-red-700 rounded-full text-lg font-semibold transition transform hover:scale-105 shadow-lg"
-          >
-            🎟 Book Now
-          </button>
+      {/* Trailer */}
+      {trailerKey ? (
+        <div className="flex justify-center mb-6">
+          <iframe
+            className="w-full max-w-4xl h-96 rounded shadow-lg"
+            src={`https://www.youtube.com/embed/${trailerKey}?autoplay=1`}
+            title={movie.title}
+            allow="autoplay; encrypted-media"
+            allowFullScreen
+          />
         </div>
+      ) : (
+        <p className="text-center text-gray-500 mb-6">Trailer not available</p>
+      )}
+
+      {/* Showtimes */}
+      <div className="bg-white p-4 rounded shadow-lg mb-6 max-w-4xl mx-auto">
+        <h2 className="font-semibold mb-2 text-purple-700">Showtimes:</h2>
+        <div className="flex flex-wrap gap-2">
+          {showTimes.map((time, idx) => (
+            <span
+              key={idx}
+              className="bg-purple-100 text-purple-700 px-3 py-1 rounded shadow-sm"
+            >
+              {time}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* Description */}
+      <div className="bg-white p-6 rounded shadow-lg max-w-4xl mx-auto">
+        <h2 className="text-xl font-semibold mb-3 text-purple-700">Description:</h2>
+        <p className="text-gray-700">{movie.overview || "No description available."}</p>
       </div>
     </div>
   );
-}
+};
+
+export default MovieDetails;

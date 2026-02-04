@@ -1,100 +1,59 @@
 import { useState } from "react";
+import { createUserWithEmailAndPassword, signInWithPopup } from "firebase/auth";
+import { auth, googleProvider } from "../config/Firebase";
 import { useNavigate } from "react-router-dom";
-import { auth, provider,signInWithPopup  } from "../config/Firebase";
 
-
-export default function Signup() {
+const Signup = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSignup = async (e) => {
     e.preventDefault();
-    console.log("Email signup:", { email, password });
-    // You can implement Firebase email/password signup here if needed
+    try {
+      await createUserWithEmailAndPassword(auth, email, password);
+      navigate("/");
+    } catch (err) {
+      alert(err.message);
+    }
   };
 
-  const handleGoogleSignup = async () => {
+  const handleGoogle = async () => {
     try {
-      const result = await signInWithPopup(auth, provider);
-      console.log("Google signup success:", result.user);
-      navigate("/movies"); // redirect after signup
-    } catch (error) {
-      console.error("Google signup error:", error);
-      alert("Google signup failed. Try again.");
+      await signInWithPopup(auth, googleProvider);
+      navigate("/");
+    } catch (err) {
+      alert(err.message);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 to-purple-900 flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-white rounded-lg shadow-xl p-8">
-        <h1 className="text-3xl font-bold text-center mb-2">Sign Up</h1>
-        <p className="text-center text-gray-600 mb-8">Create your Movie Booking account</p>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-purple-500 to-pink-500">
+      <form onSubmit={handleSignup} className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md flex flex-col gap-4">
+        <h2 className="text-2xl font-bold text-center text-purple-700">Sign Up</h2>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Email */}
-          <div>
-            <label className="block text-sm font-medium mb-2">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="your@email.com"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
-          </div>
+        <input 
+          type="email" 
+          placeholder="Email" 
+          className="border p-2 rounded" 
+          value={email} 
+          onChange={e => setEmail(e.target.value)}
+          required
+        />
+        <input 
+          type="password" 
+          placeholder="Password" 
+          className="border p-2 rounded" 
+          value={password} 
+          onChange={e => setPassword(e.target.value)}
+          required
+        />
 
-          {/* Password */}
-          <div>
-            <label className="block text-sm font-medium mb-2">Password</label>
-            <div className="relative">
-              <input
-                type={showPassword ? "text" : "password"}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-              >
-                {showPassword ? "Hide" : "Show"}
-              </button>
-            </div>
-          </div>
-
-          {/* Sign Up Button */}
-          <button
-            type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition duration-200"
-          >
-            Sign Up
-          </button>
-        </form>
-
-        {/* Google Signup */}
-        <div className="mt-6 text-center">
-          <p className="text-gray-600 mb-2">Or continue with</p>
-          <button
-            onClick={handleGoogleSignup}
-            className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 rounded-lg transition duration-200"
-          >
-            Continue with Google
-          </button>
-        </div>
-
-        <div className="mt-6 text-center text-sm text-gray-600">
-          Already have an account?{" "}
-          <a href="/login" className="text-blue-600 hover:text-blue-700 font-semibold">
-            Login
-          </a>
-        </div>
-      </div>
+        <button type="submit" className="bg-purple-600 text-white py-2 rounded hover:bg-purple-700">Sign Up</button>
+        <button type="button" onClick={handleGoogle} className="bg-red-500 text-white py-2 rounded hover:bg-red-600">Sign up with Google</button>
+      </form>
     </div>
   );
-}
+};
+
+export default Signup;

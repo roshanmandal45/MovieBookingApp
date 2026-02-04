@@ -1,88 +1,56 @@
-import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { auth, provider,signInWithPopup  } from "../config/Firebase";
+import { auth } from "../config/Firebase";
+import { signOut } from "firebase/auth";
+import { useState, useEffect } from "react";
 
-import { onAuthStateChanged, signOut } from "firebase/auth";
-
-export default function Navbar() {
+const Navbar = () => {
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
 
-  // Listen to Firebase auth changes
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
+    const unsubscribe = auth.onAuthStateChanged((u) => {
+      setUser(u);
     });
     return () => unsubscribe();
   }, []);
 
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      setUser(null);
-      navigate("/login"); // redirect to login after logout
-    } catch (error) {
-      console.error("Logout error:", error);
-    }
+  const handleLogout = () => {
+    signOut(auth).then(() => navigate("/"));
   };
 
   return (
-    <nav className="sticky top-0 z-50 flex justify-between items-center px-8 md:px-20 py-4 bg-gradient-to-r from-blue-600 to-purple-600">
-      {/* Logo */}
+    <nav className="bg-gradient-to-r from-purple-600 to-pink-500 p-4 shadow-lg flex justify-between items-center px-10">
       <div>
-        <h1 className="text-white font-bold text-lg cursor-pointer">
-          <Link to="/">MovieBooking</Link>
-        </h1>
-      </div>
+      <Link to="/" className="text-white font-bold text-2xl">🎬 CineBooking</Link>
 
-      {/* Links */}
-      <div className="flex gap-x-6 md:gap-x-10">
-        <Link to="/" className="text-white hover:text-gray-200 transition">
-          Home
-        </Link>
-        <Link to="/movies" className="text-white hover:text-gray-200 transition">
-          Movies
-        </Link>
-        <Link to="/genres" className="text-white hover:text-gray-200 transition">
-          Genres
-        </Link>
-        <Link to="/about" className="text-white hover:text-gray-200 transition">
-          About
-        </Link>
       </div>
+<div>
+  <ul className="flex space-x-6 text-white font-medium items-center">
+        <li><Link to="/">Home</Link></li>
+        <li><Link to="/genre">Genre</Link></li>
+        <li><Link to="/about">About</Link></li>
+        </ul>
+</div>
+<div className="flex justify-center items-center gap-x-2">
 
-      {/* Auth buttons / User profile */}
-      <div className="flex items-center gap-4">
-        {!user ? (
+        {user ? (
           <>
-            <Link to="/login" className="text-white hover:text-gray-200 transition">
-              Login
-            </Link>
-            <Link to="/register" className="text-white hover:text-gray-200 transition">
-              Signup
-            </Link>
+            
+              <img src={user.photoURL} alt="Profile" className="w-8 h-8 rounded-full"/>
+              <span>{user.displayName}</span>
+            
+            <button onClick={handleLogout} className="bg-white text-purple-600 px-3 py-1 rounded hover:bg-gray-100">Logout</button>
           </>
         ) : (
-          <div className="flex items-center gap-4">
-            {user.photoURL && (
-              <img
-                src={user.photoURL}
-                alt={user.displayName || "User"}
-                className="w-8 h-8 rounded-full border-2 border-white"
-              />
-            )}
-            <span className="text-white font-semibold">
-              {user.displayName ? user.displayName : user.email}
-            </span>
-            <button
-              onClick={handleLogout}
-              className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg font-medium transition"
-            >
-              Logout
-            </button>
-          </div>
+          <>
+            <Link to="/login" className="bg-white text-purple-600 px-3 py-1 rounded hover:bg-gray-100">Login</Link>
+            <Link to="/signup" className="bg-white text-purple-600 px-3 py-1 rounded hover:bg-gray-100">Sign Up</Link>
+          </>
         )}
       </div>
+
     </nav>
   );
-}
+};
+
+export default Navbar;
