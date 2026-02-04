@@ -74,9 +74,18 @@ const MovieDetails = () => {
       </div>
 
       {/* Description */}
-      <div className="bg-white p-6 rounded shadow-lg max-w-4xl mx-auto">
+      <div className="bg-white p-6 rounded shadow-lg max-w-4xl mx-auto mb-6">
         <h2 className="text-xl font-semibold mb-3 text-purple-700">Description:</h2>
         <p className="text-gray-700">{movie.overview || "No description available."}</p>
+      </div>
+
+      {/* Book Ticket Button */}
+      <div className="flex justify-center">
+        <button className="relative px-8 py-3 font-bold text-white bg-gradient-to-r from-purple-600 to-purple-800 rounded-lg overflow-hidden group hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
+          <span className="relative z-10">Book Your Ticket Now</span>
+          <span className="absolute inset-0 bg-gradient-to-r from-purple-700 to-purple-900 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+          <span className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-purple-800 rounded-lg blur opacity-0 group-hover:opacity-75 transition-opacity duration-300 -z-10"></span>
+        </button>
       </div>
     </div>
   );
