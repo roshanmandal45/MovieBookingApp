@@ -27,6 +27,7 @@ const Navbar = () => {
 <div>
   <ul className="flex space-x-6 text-white font-medium items-center">
         <li><Link to="/">Home</Link></li>
+        <li><Link to="/movies">Movie</Link></li>
         <li><Link to="/genre">Genre</Link></li>
         <li><Link to="/about">About</Link></li>
         </ul>
